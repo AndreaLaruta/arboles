@@ -266,7 +266,37 @@ public class ArbolBinarioBusqueda<K extends Comparable<K>, V>
 
     @Override
     public List<K> recorridoPostOrden() {
-        throw new UnsupportedOperationException("Not supported yet."); //To change body of generated methods, choose Tools | Templates.
+        List<K> recorrido = new LinkedList<>();
+        if(this.esArbolVacio()){
+            return recorrido;
+        }
+        Stack<NodoBinario<K,V>> pilaDeNodos = new Stack();
+        NodoBinario<K,V> nodoActual = this.raiz;
+        llenarPilaIzquierda(nodoActual, pilaDeNodos);
+        //sacando nodos de la pila
+        while(!pilaDeNodos.isEmpty()){
+            nodoActual = pilaDeNodos.pop();
+            recorrido.add(nodoActual.getClave());
+            //controlando que la pila no sea vacia
+            if(!pilaDeNodos.isEmpty()){
+                NodoBinario<K,V> nodoDelTope = pilaDeNodos.peek();
+                if(!nodoDelTope.esVacioHijoDerecho() &&
+                        nodoDelTope.getHijoDerecho() != nodoActual){
+                    nodoActual = nodoActual.getHijoDerecho();
+                    llenarPilaIzquierda(nodoActual, pilaDeNodos);
+
+                }
+            }
+        }
+        return recorrido;
+    }
+
+    private void llenarPilaIzquierda(NodoBinario<K,V> nodoToProcess, Stack<NodoBinario<K,V>> stackToProcess){
+        while(!NodoBinario.esNodoVacio(nodoToProcess)){
+            if(!nodoToProcess.esVacioHijoIzquierdo()){
+                stackToProcess.push(nodoToProcess.getHijoIzquierdo());
+            }
+        }
     }
 
     public List<K> recorridoEnPreOrdenR(){
