@@ -5,7 +5,7 @@
  */
 package bo.edu.uagrm.ficct.inf310sb.ed2202101.arboles;
 
-import bo.edu.uagrm.ficct.inf310sb.ed2202101.arboles.excepciones.ExcepcionClaveNoExiste;
+import bo.edu.uagrm.ficct.inf310sb.ed2202101.excepciones.ExcepcionClaveNoExiste;
 import java.util.List;
 
 /**

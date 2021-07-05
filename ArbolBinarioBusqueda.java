@@ -5,7 +5,7 @@
  */
 package bo.edu.uagrm.ficct.inf310sb.ed2202101.arboles;
 
-import bo.edu.uagrm.ficct.inf310sb.ed2202101.arboles.excepciones.ExcepcionClaveNoExiste;
+import bo.edu.uagrm.ficct.inf310sb.ed2202101.excepciones.ExcepcionClaveNoExiste;
 import java.util.LinkedList;
 import java.util.List;
 import java.util.Queue;
@@ -22,7 +22,12 @@ public class ArbolBinarioBusqueda<K extends Comparable<K>, V>
 
     public ArbolBinarioBusqueda() {
     }
-    
+
+    /**
+     *Permite insertar mas Nodos o generar nodos en un arbol.
+     * @param claveAInsertar: La clave a insertar en el Nodo.
+     * @param valorAInsertar: EL valor a insertar en el Nodo.
+     */
     @Override
     public void insertar(K claveAInsertar, V valorAInsertar) {
         if(valorAInsertar == null){
@@ -61,8 +66,74 @@ public class ArbolBinarioBusqueda<K extends Comparable<K>, V>
 
     @Override
     public V eliminar(K claveAEliminar) throws ExcepcionClaveNoExiste {
-        throw new UnsupportedOperationException("Not supported yet."); //To change body of generated methods, choose Tools | Templates.
+        V valorAEliminar = this.buscar(claveAEliminar);
+        if(valorAEliminar == null){
+            throw new ExcepcionClaveNoExiste();
+        }
+        this.raiz = eliminar(this.raiz, claveAEliminar);
+
+        return valorAEliminar;
     }
+
+    private NodoBinario<K,V> eliminar(NodoBinario<K,V> nodoActual, K claveAEliminar) {
+        K claveActual = nodoActual.getClave();
+
+        //cuando toca ir por izquierda
+        if(claveAEliminar.compareTo(claveActual) < 0){
+            NodoBinario<K,V> supuestoHijoIzquierdo = eliminar(nodoActual.getHijoIzquierdo(), claveAEliminar);
+            nodoActual.setHijoIzquierdo(supuestoHijoIzquierdo);
+            return nodoActual;
+        }
+        //cuando toca ir por derecha
+        if(claveAEliminar.compareTo(claveActual) > 0){
+            NodoBinario<K,V> supuestoHijoDerecho = eliminar(nodoActual.getHijoDerecho(), claveAEliminar);
+            nodoActual.setHijoDerecho(supuestoHijoDerecho);
+            return nodoActual;
+        }
+        //si no fue por izquierda ni por derecha
+        //ya encontre el nodo con la clave a eliminar
+        //ahora: debo evaluar en cual de los 3 casos se encuentra el nodo a eliminar
+
+        //CASO-1______el nodo a eliminar es nodo Hoja
+        if(nodoActual.esHoja()){
+            return  NodoBinario.nodoVacio();
+        }
+
+        //CASO-2
+        //caso2.1_____el nodo a eliminar tiene solo un Hijo Izquierdo
+        if(!nodoActual.esVacioHijoIzquierdo() && nodoActual.esVacioHijoDerecho()){
+            return nodoActual.getHijoIzquierdo();
+        }
+        //caso2.2_____el nodo a eliminar tiene un solo Hijo Derecho
+        if(nodoActual.esVacioHijoIzquierdo() && !nodoActual.esVacioHijoDerecho()){
+            return nodoActual.getHijoDerecho();
+        }
+
+        //CASO-3______el nodo a eliminar tiene ambos hijos
+
+        //buscamos y guardamos el sucesor in orden del nodo a eliminar
+        NodoBinario<K,V> nodoDelSucesor = buscarSucesor(nodoActual.getHijoDerecho());
+
+        //NOT understood!
+        //eliminamos y guardamos el que sera nuestro supuesto
+        NodoBinario<K,V> supuestoNuevoHijo = eliminar(nodoActual.getHijoDerecho(), nodoDelSucesor.getClave());
+
+        nodoActual.setHijoDerecho(supuestoNuevoHijo);
+        nodoActual.setClave(nodoDelSucesor.getClave());
+        nodoActual.setValor(nodoDelSucesor.getValor());
+        return nodoActual;
+    }
+
+
+    private NodoBinario<K, V> buscarSucesor(NodoBinario<K, V> nodoActual) {
+        NodoBinario<K,V> nodoAnterior = NodoBinario.nodoVacio();
+        while(!NodoBinario.esNodoVacio(nodoActual)){
+            nodoAnterior = nodoActual;
+            nodoActual = nodoActual.getHijoIzquierdo();
+        }
+        return nodoAnterior;
+    }
+
 
     @Override
     public V buscar(K claveABuscar) {
@@ -105,6 +176,30 @@ public class ArbolBinarioBusqueda<K extends Comparable<K>, V>
         return contadorDeNodos;
     }
 
+    public int sizePN(){
+        if(this.esArbolVacio()){
+            return 0;
+        }
+
+        int cantidadDeNodos = 0;
+
+        Queue<NodoBinario<K,V>> colaDeNodos = new LinkedList<>();
+        NodoBinario<K,V> nodoActual = this.raiz;
+        colaDeNodos.offer(nodoActual);
+
+        while(!colaDeNodos.isEmpty()){
+            nodoActual = colaDeNodos.poll();
+            cantidadDeNodos++;
+            if(!nodoActual.esVacioHijoIzquierdo()){
+                colaDeNodos.offer(nodoActual.getHijoIzquierdo());
+            }
+            if(!nodoActual.esVacioHijoDerecho()){
+                colaDeNodos.offer(nodoActual.getHijoDerecho());
+            }
+        }
+        return cantidadDeNodos;
+    }
+
     public int sizeR(){
         return size(this.raiz);
     }
@@ -115,7 +210,7 @@ public class ArbolBinarioBusqueda<K extends Comparable<K>, V>
         }
         int tamHijoIzquierdo = size(nodoActual.getHijoIzquierdo());
         int tamHijoDerecho = size(nodoActual.getHijoDerecho());
-        return tamHijoIzquierdo + 1 + tamHijoDerecho;
+        return tamHijoIzquierdo + tamHijoDerecho + 1;
     }
 
     public int sizeJ(){
@@ -164,22 +259,86 @@ public class ArbolBinarioBusqueda<K extends Comparable<K>, V>
     }
 
     protected int altura(NodoBinario<K,V> nodoActual){
+        if(NodoBinario.esNodoVacio(nodoActual)){
+            return 0;
+        }
+        int alturaPorIzquierda = altura(nodoActual.getHijoIzquierdo());
+        int alturaPorDerecha = altura(nodoActual.getHijoDerecho());
+
+        return alturaPorIzquierda > alturaPorDerecha? alturaPorIzquierda + 1:
+                alturaPorDerecha + 1;
+    }
+
+    //Aqui se utiliza estructura de codigo del size
+    //En este punto interesa conocer en que lugar del arbol esta el nodo
+    //Nos interesa ver los niveles del nodo
+    //Debemos
+    public int alturaIter(){
         if(this.esArbolVacio()){
             return 0;
         }
-        Queue <NodoBinario<K,V>> colaDeNodos = new LinkedList<>();
-        colaDeNodos.offer(this.raiz);
-        int alturaDelArbol = 0;
-        while(!colaDeNodos.isEmpty()){
-            //int nodosDelNivel = colaDeNodos.poll();
 
+        int alturaDelArbol = 0;
+        Queue<NodoBinario<K,V>> colaDeNodos = new LinkedList<>();
+        colaDeNodos.offer(this.raiz);
+
+        while(!colaDeNodos.isEmpty()){
+
+            int nroDeNodosDeNivel = colaDeNodos.size();
+            int posicion = 0;
+
+            while(posicion < nroDeNodosDeNivel){
+                NodoBinario<K,V> nodoActual = colaDeNodos.poll();
+
+                if(!nodoActual.esVacioHijoIzquierdo()){
+                    colaDeNodos.offer(nodoActual.getHijoIzquierdo());
+                }
+                if(!nodoActual.esVacioHijoDerecho()){
+                    colaDeNodos.offer(nodoActual.getHijoDerecho());
+                }
+                posicion++;
+            }
+            alturaDelArbol++;
         }
-        return 0;
+        return  alturaDelArbol;
     }
+
 
     @Override
     public int nivel() {
-        throw new UnsupportedOperationException("Not supported yet."); //To change body of generated methods, choose Tools | Templates.
+        if(this.esArbolVacio()){
+            throw new RuntimeException("No existen valores " +
+                    "para calcular el Nivel en el Nivel");
+        }
+
+        NodoBinario<K,V> nodoActual = this.raiz;
+        int nivel = 0;
+        if(nodoActual.esHoja()){
+            return nivel;
+        }
+
+        Queue<NodoBinario<K,V>> colaDeNodos = new LinkedList<>();
+        colaDeNodos.offer(this.raiz);
+
+        while(!colaDeNodos.isEmpty()){
+
+            int nroDeNodosDeNivel = colaDeNodos.size();
+            int posicion = 0;
+
+            while(posicion < nroDeNodosDeNivel){
+                NodoBinario<K,V> nodoEnProceso = colaDeNodos.poll();
+
+                if(!nodoActual.esVacioHijoIzquierdo()){
+                    colaDeNodos.offer(nodoEnProceso.getHijoIzquierdo());
+                }
+                if(!nodoActual.esVacioHijoDerecho()){
+                    colaDeNodos.offer(nodoEnProceso.getHijoDerecho());
+                }
+                posicion++;
+            }
+            nivel++;
+        }
+        return  nivel;
     }
 
     @Override
@@ -272,7 +431,7 @@ public class ArbolBinarioBusqueda<K extends Comparable<K>, V>
         }
         Stack<NodoBinario<K,V>> pilaDeNodos = new Stack();
         NodoBinario<K,V> nodoActual = this.raiz;
-        llenarPilaIzquierda(nodoActual, pilaDeNodos);
+        insertarPilaParaPostOrden(nodoActual, pilaDeNodos);
         //sacando nodos de la pila
         while(!pilaDeNodos.isEmpty()){
             nodoActual = pilaDeNodos.pop();
@@ -283,7 +442,7 @@ public class ArbolBinarioBusqueda<K extends Comparable<K>, V>
                 if(!nodoDelTope.esVacioHijoDerecho() &&
                         nodoDelTope.getHijoDerecho() != nodoActual){
                     nodoActual = nodoActual.getHijoDerecho();
-                    llenarPilaIzquierda(nodoActual, pilaDeNodos);
+                    insertarPilaParaPostOrden(nodoDelTope.getHijoDerecho(), pilaDeNodos);
 
                 }
             }
@@ -291,10 +450,13 @@ public class ArbolBinarioBusqueda<K extends Comparable<K>, V>
         return recorrido;
     }
 
-    private void llenarPilaIzquierda(NodoBinario<K,V> nodoToProcess, Stack<NodoBinario<K,V>> stackToProcess){
-        while(!NodoBinario.esNodoVacio(nodoToProcess)){
-            if(!nodoToProcess.esVacioHijoIzquierdo()){
-                stackToProcess.push(nodoToProcess.getHijoIzquierdo());
+    private void insertarPilaParaPostOrden(NodoBinario<K,V> nodoActual, Stack<NodoBinario<K,V>> pilaDeNodos){
+        while(!NodoBinario.esNodoVacio(nodoActual)){
+            pilaDeNodos.push(nodoActual);
+            if(!nodoActual.esVacioHijoIzquierdo()){
+                nodoActual = nodoActual.getHijoIzquierdo();
+            }else{
+                nodoActual = nodoActual.getHijoDerecho();
             }
         }
     }
@@ -396,4 +558,122 @@ public class ArbolBinarioBusqueda<K extends Comparable<K>, V>
 		
 		return cadena.toString();
 	}
+
+
+
+//Ejercicio3: Implemente un método iterativo que retorne la cantidad de nodos que tienen ambos hijos
+//distintos de vacío en un árbol binario
+
+    public int cantidadDeNodosCompletosEnElArbol() {
+        if (this.esArbolVacio()) {
+            return 0;
+        }
+
+        int cantidad = 0;
+        Queue<NodoBinario<K, V>> colaDeNodos = new LinkedList<>();
+        colaDeNodos.offer(this.raiz);
+
+        while (!colaDeNodos.isEmpty()) {
+            NodoBinario<K, V> nodoActual = colaDeNodos.poll();
+
+            if (!nodoActual.esVacioHijoIzquierdo() && !nodoActual.esVacioHijoDerecho()) {
+                cantidad = cantidad + 1;
+            }
+            if (!nodoActual.esVacioHijoIzquierdo()) {
+                colaDeNodos.offer(nodoActual.getHijoIzquierdo());
+            }
+            if (!nodoActual.esVacioHijoDerecho()) {
+                colaDeNodos.offer(nodoActual.getHijoDerecho());
+            }
+        }
+        return cantidad;
+    }
+    ///same recursivo
+
+    public int cantNodosCompletos(){
+        return cantNodosCompletos(this.raiz);
+    }
+
+    private int cantNodosCompletos(NodoBinario<K,V> nodoActual){
+        if(NodoBinario.esNodoVacio(nodoActual)){
+            return 0;
+        }
+        int cantidadNodosCompletosIzquierdo = cantNodosCompletos(nodoActual.getHijoIzquierdo());
+        int cantidadNodosCompletosDerecho =  cantNodosCompletos(nodoActual.getHijoDerecho());
+
+        if((!nodoActual.esVacioHijoIzquierdo()) && (!nodoActual.esVacioHijoDerecho())){
+            return cantidadNodosCompletosIzquierdo +
+                    cantidadNodosCompletosDerecho + 1;
+        }
+        return cantidadNodosCompletosIzquierdo +
+                cantidadNodosCompletosDerecho;
+    }
+
+
+
+
+    //Ejercicio 4: Implemente un método recursivo que retorne la cantidad de nodos que tienen
+    // ambos hijos distintos de vacío en un árbol binario
+
+    public int cantidadHijosDeNodosCompletos(){
+        int cantidad = 0;
+        if(esArbolVacio()){
+            return 0;
+        }
+        return cantidadHijosDeNodosCompletos(this.raiz);
+    }
+
+    private int cantidadHijosDeNodosCompletos(NodoBinario<K,V> nodoActual){
+        if(NodoBinario.esNodoVacio(nodoActual)){
+            return 0;
+        }
+        int cantHijosDeNodesCompletosIzq = cantidadHijosDeNodosCompletos(nodoActual.getHijoIzquierdo());
+        int cantHijosDeNodesCompletosDer = cantidadHijosDeNodosCompletos(nodoActual.getHijoDerecho());
+        if(!nodoActual.esVacioHijoIzquierdo() && !nodoActual.esVacioHijoDerecho()){
+            return cantHijosDeNodesCompletosIzq + cantHijosDeNodesCompletosDer + 1;
+        }
+        return cantHijosDeNodesCompletosIzq + cantHijosDeNodesCompletosDer;
+    }
+
+    //mi iterativo...
+
+    public int cantidadDeHijosDeNodosCompletos(){
+        int cantidad2HermanosPorPadre = 0;
+        if(esArbolVacio()){
+            return cantidad2HermanosPorPadre;
+        }
+
+        Queue<NodoBinario<K,V>> colaDeNodos = new LinkedList<>();
+        colaDeNodos.offer(this.raiz);
+
+        while(!colaDeNodos.isEmpty()){
+            NodoBinario<K,V> nodoActual = colaDeNodos.poll();
+            if(!nodoActual.esVacioHijoDerecho() && !nodoActual.esVacioHijoIzquierdo()){
+                cantidad2HermanosPorPadre = cantidad2HermanosPorPadre + 2;
+            }
+            if(!nodoActual.esVacioHijoIzquierdo()){
+                colaDeNodos.offer(nodoActual.getHijoIzquierdo());
+            }
+            if(!nodoActual.esVacioHijoDerecho()){
+                colaDeNodos.offer(nodoActual.getHijoDerecho());
+            }
+        }
+        return cantidad2HermanosPorPadre;
+    }
+//Implemente un método iterativo que retorne la cantidad de nodos que tienen ambos hijos
+//distintos de vacío en un árbol binario, pero solo en el nivel N
+
+
+
+    //Ejercicio 14
+	/*public void reconstruccionArbol(List<NodoBinario<K,V>> listaInOrden, List<NodoBinario<K,V>> listaPreOrden){
+        if((listaInOrden.size() == listaPreOrden.size()) &&
+                (!listaInOrden.isEmpty() || !listaPreOrden.isEmpty())){
+
+            return
+        }
+    }*/
+
+
+
 }
